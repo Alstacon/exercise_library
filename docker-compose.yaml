@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  db:
+    container_name: exercise_db
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - exercise_pg_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: pg_isready -U ${DB_USER} -d ${DB_NAME}
+      interval: 3s
+      retries: 3
+      timeout: 3s
+
+  api:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    container_name: exercise_library_app
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+
+
+
+
+volumes:
+  exercise_pg_data:
